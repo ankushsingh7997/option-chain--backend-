@@ -11,7 +11,7 @@ interface Url{
 
 export const URLS :Url= {
     firstock: {
-        login: { callback: BASE_URL, verify_token: "https://signon.firstock.in/firstock/verifyToken" },
+        login: { callback: `${BASE_URL}/broker`, verify_token: "https://signon.firstock.in/firstock/verifyToken" },
         placer: { place: "https://connect.thefirstock.com/api/V3/placeOrder", 
         modify: "https://connect.thefirstock.com/api/V3/modifyOrder", 
         cancel: "https://connect.thefirstock.com/api/V3/cancelOrder" },
