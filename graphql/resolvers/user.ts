@@ -54,6 +54,19 @@ export const userResolvers={
                 }
             
         }),
+        logout: catchAsyncGraphQL(async (_: any, __: any, context: Context) => {
+            context.res.clearCookie("jwt", {
+                httpOnly: true,
+                secure: context.environment !== "LOCAL",
+                sameSite: "lax",
+            });
+        
+            return {
+                status: true,
+                message: "Logged out successfully",
+            };
+        }),
+        
         updateUser:catchAsyncGraphQL(async(_: any,{input}:{input:any},context:Context)=>{
             if(!context.userId) throwGraphQLError("Please login to access this Resource","UNAUTHENTICATED")
             

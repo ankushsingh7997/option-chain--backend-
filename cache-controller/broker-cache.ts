@@ -58,7 +58,7 @@ export const get_all_brokers = async (userId: string): Promise<IBroker[] | undef
     try {
         if (!client) throw new Error("Redis client is not initialized");
         const cached = await client.HGET(userId, "all_brokers");
-        if (!cached) {
+        if (!cached ||cached === "[]") {
             const brokers = await Broker.find({ userId }).select("+accessToken").lean();
             await set_all_brokers(userId, brokers);
             return brokers;

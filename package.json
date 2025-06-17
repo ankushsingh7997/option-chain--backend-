@@ -1,9 +1,13 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "start": "NODE_ENV=production node dist/server.js",
+    "production": "npm run build && pm2 start ecosystem.config.js --env production",
+    "stop": "pm2 stop option-chain-cluster-1 && pm2 stop option-chain-cluster-2 && pm2 delete option-chain-cluster-1 && pm2 delete option-chain-cluster-2",
+    "stop_clear": "npm run stop && rm -rf ./Logs ./dist || true"
   },
   "keywords": [],
   "author": "",
@@ -42,6 +46,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.16.0",
     "mongoose": "^8.15.0",
+    "pm2": "^6.0.8",
     "redis": "^5.1.0",
     "validator": "^13.15.0",
     "winston": "^3.17.0",

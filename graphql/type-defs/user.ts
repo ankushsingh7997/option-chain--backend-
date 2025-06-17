@@ -57,6 +57,7 @@ export const userTypeDefs = gql`
     register(input: RegisterInput!): AuthPayload!
     login(input: LoginInput!): AuthPayload!
     updateUser(input: UpdateUserInput!): UpdateUserResponse!
+    logout:HealthResponse!
   }
 
   type HealthResponse {
