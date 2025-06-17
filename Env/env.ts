@@ -98,3 +98,4 @@ export const ENCRYPTION_SECRET_KEY=requireEnv("ENCRYPTION_SECRET_KEY")
 export const ENCRYPTION_METHOD=requireEnv("ENCRYPTION_METHOD")
 
 export const BASE_URL =requireEnv("BASE_URL")
+export const LOCAL_URL=process.env.LOCAL_URL||""

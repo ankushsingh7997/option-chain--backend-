@@ -16,14 +16,19 @@ import { createContext, Context } from "../graphql/context";
 
 import logger from "../Utils/logger";
 import { getStatusCode } from "../constants/common";
+import { BASE_URL, LOCAL_URL } from "../Env/env";
 
 // CORS configurations
 const corsOptions = {
-  origin: true,
+  origin: [
+    LOCAL_URL,       // Vite dev
+       BASE_URL    // Production
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Apollo-Require-Preflight']
 };
+
 
 const app = express();
 
