@@ -15,48 +15,13 @@ import { resolvers } from "../graphql/resolvers/index";
 import { createContext, Context } from "../graphql/context";
 
 import logger from "../Utils/logger";
-import { getStatusCode } from "../constants/common";
-import { BASE_URL, LOCAL_URL } from "../Env/env";
+import { allowedUrls, getStatusCode, corsOptions, localHelmetConfig, productionHelmetConfig } from "../constants/common";
+import { BASE_URL } from "../Env/env";
 
-
-// CORS configurations
-const corsOptions = {
-  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-    
-    if (!origin) {
-      return callback(null, true);
-    }
-    
-    const allowedOrigins = [
-      BASE_URL,
-      ...LOCAL_URL
-    ];
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'), false);
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'Apollo-Require-Preflight',
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-    'Access-Control-Request-Method',
-    'Access-Control-Request-Headers'
-  ],
-  exposedHeaders: ['Set-Cookie'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-};
 
 const app = express();
 
+// CORS configurations
 app.set("trust proxy", true);
 app.use(cors(corsOptions));
 
@@ -78,28 +43,10 @@ app.use(hpp());
 // Environment-specific helmet configuration
 if (process.env.NODE_ENV === 'development') {
   console.log('🔧 Running in development mode - relaxed security');
-  app.use(helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: false,
-    hsts: false
-  }));
+  app.use(helmet(localHelmetConfig));
 } else {
   console.log('🔒 Running in production mode - strict security');
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://embeddable-sandbox.cdn.apollographql.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://embeddable-sandbox.cdn.apollographql.com"],
-        imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'", "https://embeddable-sandbox.cdn.apollographql.com"],
-        fontSrc: ["'self'", "https://embeddable-sandbox.cdn.apollographql.com"],
-        frameSrc: ["'self'", "https://embeddable-sandbox.cdn.apollographql.com"]
-      }
-    },
-    crossOriginEmbedderPolicy: false
-  }));
+  app.use(helmet(productionHelmetConfig));
 }
 
 
@@ -172,7 +119,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
       status: false,
       message: 'CORS policy violation - Origin not allowed',
       origin: req.headers.origin,
-      allowedOrigins: [LOCAL_URL, BASE_URL]
+      allowedOrigins: [allowedUrls, BASE_URL]
     });
   } else {
     console.error('Unhandled error:', err);
