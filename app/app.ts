@@ -18,32 +18,74 @@ import logger from "../Utils/logger";
 import { getStatusCode } from "../constants/common";
 import { BASE_URL, LOCAL_URL } from "../Env/env";
 
+
 // CORS configurations
 const corsOptions = {
-  origin: [
-    LOCAL_URL,       // Vite dev
-       BASE_URL    // Production
-  ],
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    const allowedOrigins = [
+      BASE_URL,
+      ...LOCAL_URL
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'), false);
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Apollo-Require-Preflight']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'Apollo-Require-Preflight',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
+  ],
+  exposedHeaders: ['Set-Cookie'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
-
 
 const app = express();
 
 app.set("trust proxy", true);
-app.use(express.json());
-app.use(cookieParser());
 app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,Apollo-Require-Preflight,X-Requested-With,Accept,Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(204);
+});
+
+// Apply other middleware AFTER CORS
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(hpp());
 
+// Environment-specific helmet configuration
 if (process.env.NODE_ENV === 'development') {
+  console.log('🔧 Running in development mode - relaxed security');
   app.use(helmet({
     contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: false,
+    hsts: false
   }));
 } else {
+  console.log('🔒 Running in production mode - strict security');
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
@@ -60,10 +102,12 @@ if (process.env.NODE_ENV === 'development') {
   }));
 }
 
+
 app.get("/api/v1/healthCheck", (req: Request, res: Response, next: NextFunction) => {
   res.status(200).json({
     status: true,
     message: "Health is OK",
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -84,7 +128,7 @@ export const createApolloServer = async () => {
               const { response, errors } = requestContext;
               
               if (errors && errors.length > 0) { 
-                const httpStatusCode = getStatusCode(errors[0].extensions.code as string)
+                const httpStatusCode = getStatusCode(errors[0].extensions?.code as string)
                 response.http!.status = httpStatusCode;
               }
             }
@@ -106,17 +150,37 @@ export const createApolloServer = async () => {
   });
 
   await server.start();
-
   app.use(
     '/graphql',
-    cors(corsOptions),
     express.json(),
     expressMiddleware(server, {
-      context: async ({ req, res }) => await createContext({ req, res }),
+      context: async ({ req, res }) => {
+        return await createContext({ req, res });
+      },
     })
   );
 
   return server;
 };
+
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.log('❌ Error middleware triggered:', err.message);
+  console.log('🌐 Request origin:', req.headers.origin);
+  
+  if (err.message === 'Not allowed by CORS') {
+    res.status(403).json({
+      status: false,
+      message: 'CORS policy violation - Origin not allowed',
+      origin: req.headers.origin,
+      allowedOrigins: [LOCAL_URL, BASE_URL]
+    });
+  } else {
+    console.error('Unhandled error:', err);
+    res.status(500).json({
+      status: false,
+      message: 'Internal server error'
+    });
+  }
+});
 
 export default app;

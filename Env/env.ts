@@ -98,4 +98,4 @@ export const ENCRYPTION_SECRET_KEY=requireEnv("ENCRYPTION_SECRET_KEY")
 export const ENCRYPTION_METHOD=requireEnv("ENCRYPTION_METHOD")
 
 export const BASE_URL =requireEnv("BASE_URL")
-export const LOCAL_URL=process.env.LOCAL_URL||""
+export const LOCAL_URL=['http://localhost:5173','http://localhost:5174','http://127.0.0.1:5173','http://127.0.0.1:5174',]
