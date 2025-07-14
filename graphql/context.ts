@@ -11,14 +11,6 @@ export interface Context {
   userId?: string;
   user?: any;
   environment: string;
-  // Add logging utility to context
-  // logOperation: (data: {
-  //   operationName?: string;
-  //   variables?: any;
-  //   result?: any;
-  //   errors?: any[];
-  //   startTime: number;
-  // }) => void;
 }
 
 export const createContext = async ({ req, res }: { req: Request; res: Response }): Promise<Context> => {
@@ -43,40 +35,9 @@ export const createContext = async ({ req, res }: { req: Request; res: Response 
     }
   }
 
-  // const logOperation = (data: {
-  //   operationName?: string;
-  //   variables?: any;
-  //   result?: any;
-  //   errors?: any[];
-  //   startTime: number;
-  // }) => {
-  //   if (context.userId) {
-  //     const logData = {
-  //       time_taken: Date.now() - data.startTime,
-  //       received_at: data.startTime,
-  //       status_code: data.errors ? 400 : 200,
-  //       received_payload: {
-  //         operationName: data.operationName,
-  //         variables: data.variables
-  //       },
-  //       userId: context.userId,
-  //       method: "POST",
-  //       url: "/graphql",
-  //       sent_payload: {
-  //         data: data.result,
-  //         errors: data.errors
-  //       },
-  //       ip: req.headers["x-forwarded-for"] || req.ip,
-  //       operation_name: data.operationName,
-  //       errors: data.errors
-  //     };
-      
-  //     logger.api(logData);
-  //   }
-  // };
+
 
   return {
     ...context,
-    // logOperation
   } as Context;
 };
